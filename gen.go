@@ -1,7 +1,9 @@
+// +build ignore
+
 package main
 
 import (
-	"github.com/RaymondCode/simple-demo/model"
+	"github.com/RaymondCode/simple-demo/model/dto"
 	"gorm.io/gen"
 	"gorm.io/gorm"
 	"gorm.io/driver/mysql"
@@ -22,16 +24,19 @@ func main() {
 
   	gormdb, _ := gorm.Open(mysql.Open("test:123456@(120.55.103.230:3306)/douyin"))
   	g.UseDB(gormdb) // reuse your gorm db
+	
+	// create tables
+	gormdb.AutoMigrate(dto.User{}, dto.Video{}, dto.Comment{}, dto.Message{}, dto.Follow{})
 
-  	g.ApplyBasic(
-		g.GenerateModel("users"),
-		g.GenerateModel("videos"),
-	 	g.GenerateModel("comments"),
-	 	g.GenerateModel("messages"),
-	 	g.GenerateModel("follows"),	
-	)
   	// Generate basic type-safe DAO API for struct `model.User` following conventions
-  	// g.ApplyBasic(model.User{}, model.Video{}, model.Comment{}, model.Message{}, model.Follow{})
+  	// g.ApplyBasic(dto.User{}, dto.Video{}, dto.Comment{}, dto.Message{}, dto.Follow{})
+  	g.ApplyBasic(
+	 	g.GenerateModel("users"),
+	 	g.GenerateModel("videos"),
+	 	g.GenerateModel("comments"),
+	  	g.GenerateModel("messages"),
+	  	g.GenerateModel("follows"),	
+	)
 
   	// Generate Type Safe API with Dynamic SQL defined on Querier interface for `model.User` and `model.Company`
   	// g.ApplyInterface(func(Querier){}, model.User{}, model.Passport{})
@@ -40,5 +45,5 @@ func main() {
   	g.Execute()
 
 	// create tables
-	gormdb.AutoMigrate(model.User{}, model.Video{}, model.Comment{}, model.Message{}, model.Follow{})
+	// gormdb.AutoMigrate(dto.User{}, dto.Video{}, dto.Comment{}, dto.Message{}, dto.Follow{})
 }
