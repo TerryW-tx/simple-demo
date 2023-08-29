@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"github.com/RaymondCode/simple-demo/model"
+	"github.com/RaymondCode/simple-demo/dal"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync/atomic"
@@ -50,29 +51,36 @@ func Register(c *gin.Context) {
 
 	// token := username + password
 	token := GenerateToken(username, password)
+	u := dal.User
+	_, err := u.Where(u.Username.Eq(username), u.Password.Eq(password)).Take()
 
-	if exist, _ := ValidateToken(token); exist {
+	if err == nil {
 		c.JSON(http.StatusOK, UserLoginResponse{
                         Response: Response{StatusCode: 1, StatusMsg: "User already exist"},
                 })
 	} else {
 		fmt.Println("new user")
-		new_user := model.UserInfo{
+		user := model.User{
 			UserId: GenerateUserId(),
 			UserName: username,
 			Password: password,
-			CreateAt: time.Now().UnixNano(),
+			CreateAt: time.Now().Unix(),
 			Token: token,
-			TokenUpdateAt: time.Now().UnixNano(),
+			TokenUpdateAt: time.Now().Unix(),
 			Avatar: "teststring",
 			BackgroundImage: "testimage",
+			FollowCount: 0,
+			FollowerCount: 0,
+			FavoriteCount: 0,
+			WorkCount: 0,
 		}
-		model.CreateUserInfo(&new_user)
+		// model.CreateUserInfo(&new_user)
+		u.Create(&user)
 		c.JSON(
 			http.StatusOK, UserLoginResponse{
                         Response: Response{StatusCode: 0},
-                        UserId:   new_user.UserId,
-                        Token:    new_user.Token,
+                        UserId:   user.UserId,
+                        Token:    user.Token,
 		})
 	}
 
@@ -107,13 +115,19 @@ func Login(c *gin.Context) {
 
 	// token := username + password
 	// token := GenerateToken(username, password)
+	userDal := dal.User
+	user, err := userDal.Where(userDal.Username.Eq(username), userDal.Password.Eq(password)).Take()
 
-	if user, exist := model.QueryUserInfoByUsername(username); exist == nil && password == user.Password {
+	if exist == nil {
 		user.Token = GenerateToken(username, password)
-		user.TokenUpdateAt = time.Now().UnixNano()
+		user.TokenUpdateTime = time.Now().Unix()
 		fmt.Println(user.Token)
-		model.UpdateUserInfo(&user)
-                c.JSON(http.StatusOK, UserLoginResponse{
+		// model.UpdateUserInfo(&user)
+                u.Where(u.Username.Eq(username), u.Password.Eq(password)).UpdateSimple(
+			userDal.Token.Value(user.Token), 
+			userDal.TokenUpdateTime(user.TokenUpdateTime),
+		)
+		c.JSON(http.StatusOK, UserLoginResponse{
                         Response: Response{StatusCode: 0},
                         UserId:   user.UserId,
                         Token:    user.Token,
@@ -142,14 +156,17 @@ func Login(c *gin.Context) {
 func UserInfo(c *gin.Context) {
 	token := c.Query("token")
 
-	if _, exist := model.QueryUserInfoByToken(token); exist == nil {
+	u := dal.User
+	user, err := u.Where(u.Token.Eq(token)).Take()
+
+	if err == nil {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: Response{StatusCode: 0},
 			User:  User{
-					Id:            1,
-					Name:          "zhanglei",
-					FollowCount:   10,
-					FollowerCount: 5,
+					Id:            user.UserId,
+					Name:          user.Username,
+					FollowCount:   user.FollowCount,
+					FollowerCount: user.FollowerCount,
 					IsFollow:      true,
 			}, 
 		})
