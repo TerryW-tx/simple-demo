@@ -1,7 +1,7 @@
-package model
+package dto
 
 type User struct {
-	UserId 		int32 	`gorm:"primaryKey"`
+	UserID 		int64 	`gorm:"primaryKey"`
 	Username 	string
 	Password 	string
 	CreateTime	int64

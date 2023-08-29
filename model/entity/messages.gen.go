@@ -8,9 +8,9 @@ const TableNameMessage = "messages"
 
 // Message mapped from table <messages>
 type Message struct {
-	MessageID   int32  `gorm:"column:message_id;primaryKey" json:"message_id"`
-	UserID      int32  `gorm:"column:user_id;primaryKey" json:"user_id"`
-	ToUserID    int32  `gorm:"column:to_user_id;primaryKey" json:"to_user_id"`
+	MessageID   int64  `gorm:"column:message_id;primaryKey" json:"message_id"`
+	UserID      int64  `gorm:"column:user_id;primaryKey" json:"user_id"`
+	ToUserID    int64  `gorm:"column:to_user_id;primaryKey" json:"to_user_id"`
 	MessageText string `gorm:"column:message_text" json:"message_text"`
 	CreateTime  int64  `gorm:"column:create_time" json:"create_time"`
 	CreateDate  string `gorm:"column:create_date" json:"create_date"`

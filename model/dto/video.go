@@ -1,10 +1,10 @@
-package model
+package dto
 
 type Video struct {
-	VideoId		int32 	`gorm:"primaryKey"`
-	UserId		int32 	`gorm:"primaryKey"`
+	VideoID		int64 	`gorm:"primaryKey"`
+	UserID		int64 	`gorm:"primaryKey"`
 	Token		string
-	CreateAt	int64
+	CreateTime	int64
 	PlayUrl		string
 	CoverUrl	string
 	FavoriteCount	int

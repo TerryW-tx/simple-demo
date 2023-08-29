@@ -8,9 +8,9 @@ const TableNameComment = "comments"
 
 // Comment mapped from table <comments>
 type Comment struct {
-	CommentID   int32  `gorm:"column:comment_id;primaryKey" json:"comment_id"`
-	VideoID     int32  `gorm:"column:video_id;primaryKey" json:"video_id"`
-	UserID      int32  `gorm:"column:user_id;primaryKey" json:"user_id"`
+	CommentID   int64  `gorm:"column:comment_id;primaryKey" json:"comment_id"`
+	VideoID     int64  `gorm:"column:video_id;primaryKey" json:"video_id"`
+	UserID      int64  `gorm:"column:user_id;primaryKey" json:"user_id"`
 	CommentText string `gorm:"column:comment_text" json:"comment_text"`
 	CreateTime  int64  `gorm:"column:create_time" json:"create_time"`
 	CreateDate  string `gorm:"column:create_date" json:"create_date"`
