@@ -8,7 +8,6 @@ import (
 	"time"
 	"gorm.io/gorm"
         // "gorm.io/driver/mysql"
-	"github.com/RaymondCode/simple-demo/model"
 )
 
 func GenerateToken(username, password string) string {
@@ -26,16 +25,4 @@ func GenerateToken(username, password string) string {
 	token := md5HashString + hex.EncodeToString(salt)
 	fmt.Println(token)
 	return token
-}
-
-func ValidateToken(token string) (bool, error) {
-	// var userInfo UserInfo
-    	_, err := model.QueryUserInfoByToken(token)
-    	if err != nil {
-        	if err == gorm.ErrRecordNotFound {
-            		return false, nil
-        	}
-        	return false, err
-    	}
-    	return true, nil	
 }

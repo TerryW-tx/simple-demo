@@ -32,7 +32,7 @@ func Feed(c *gin.Context) {
 		for i := range videos {
 			videosController = append(
 				videosController, 
-				ConvertVideoEntityToController(videos[i]),
+				ConvertVideoEntityToController(&(videos[i])),
 			)
 		}
 		// videos := VideoInfosToVideos(video_infos)
@@ -47,8 +47,8 @@ func Feed(c *gin.Context) {
 func ConvertVideoEntityToController(video *entity.Video) *Video {
 	userDal := dal.User
 	user, _ := userDal.WithContext(ctx).Where(userDal.UserID.Eq(video.UserID)).Take()
-	videoController := controller.video{
-		Id: video.VideoId,
+	videoController := Video{
+		Id: video.VideoID,
 		Author: user,
 		PlayUrl: video.PlayURL,
 		CoverUrl: video.CoverURL,
@@ -56,4 +56,5 @@ func ConvertVideoEntityToController(video *entity.Video) *Video {
 		CommentCount: video.CommentCount,
 		IsFavorite: false,
 	}
+	return videoController
 }

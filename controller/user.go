@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync/atomic"
+	"strconv"
 )
 
 // usersLoginInfo use map to store user info, and key is username+password for demo
@@ -26,7 +27,7 @@ var usersLoginInfo = map[string]User{
 }
 
 var userIdSequence = int64(1)
-var ctx, _ = context.TODO()
+var ctx = context.TODO()
 
 type UserLoginResponse struct {
 	Response
@@ -160,6 +161,7 @@ func Login(c *gin.Context) {
 
 func UserInfo(c *gin.Context) {
 	token := c.Query("token")
+	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
 
 	userDal := dal.User
 	user, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
@@ -168,9 +170,9 @@ func UserInfo(c *gin.Context) {
 	fmt.Println(err)
 
 	if err == nil {
-		_, followErr = dal.Follow.WithContext(ctx).Where(
-			dal.Follow.FollowByID.Eq(user.UserID),
-			dal.Follow.FollowerID.Eq(c.Query("user_id")),
+		_, followErr := dal.Follow.WithContext(ctx).Where(
+			dal.Follow.FollowbyID.Eq(user.UserID),
+			dal.Follow.FollowerID.Eq(userId),
 		).Take()
 		c.JSON(http.StatusOK, UserResponse{
 			Response: Response{StatusCode: 0},
@@ -208,7 +210,7 @@ func ConvertUserEntityToDto(user *entity.User) *dto.User {
 		Password: user.Password,
 		CreateTime: user.CreateTime,
 		Token: user.Token,
-		TokenUpdateTime: TokenUpdateTime，
+		TokenUpdateTime: TokenUpdateTime,
 		Avatar: user.Avatar,
 		BackgroundImage: user.BackgroundImage,
 		FollowCount: user.FollowCount,

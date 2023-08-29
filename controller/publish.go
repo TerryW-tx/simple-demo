@@ -5,6 +5,7 @@ import (
 	"time"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"sync/atomic"
 	"path/filepath"
 	"github.com/RaymondCode/simple-demo/model/dto"
 	"github.com/RaymondCode/simple-demo/model/entity"
@@ -53,14 +54,15 @@ func Publish(c *gin.Context) {
   		VideoID: videoIdSequence,
 		UserID: user.UserID,
         	Token: token,
-        	CreateAt: time.Now().Unix(),
-        	PlayUrl: static + finalName,
-        	CoverUrl: static + "bear.jpg",
+        	CreateTime: time.Now().Unix(),
+        	PlayURL: static + finalName,
+        	CoverURL: static + "bear.jpg",
         	FavoriteCount: 0,
         	CommentCount: 0,
         	Title: filename,
 	}
 	// model.CreateVideoInfo(&new_video)
+	videoDal := dal.Video
 	videoDal.WithContext(ctx).Create(&video)
 	userDal.WithContext(ctx).Where(userDal.UserID.Eq(user.UserID)).UpdateSimple(userDal.WorkCount.Add(1))
 	// saveFile := filepath.Join("./public/", 'test.mp4')
