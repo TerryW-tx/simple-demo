@@ -27,9 +27,9 @@ func newComment(db *gorm.DB, opts ...gen.DOOption) comment {
 
 	tableName := _comment.commentDo.TableName()
 	_comment.ALL = field.NewAsterisk(tableName)
-	_comment.CommentID = field.NewInt32(tableName, "comment_id")
-	_comment.VideoID = field.NewInt32(tableName, "video_id")
-	_comment.UserID = field.NewInt32(tableName, "user_id")
+	_comment.CommentID = field.NewInt64(tableName, "comment_id")
+	_comment.VideoID = field.NewInt64(tableName, "video_id")
+	_comment.UserID = field.NewInt64(tableName, "user_id")
 	_comment.CommentText = field.NewString(tableName, "comment_text")
 	_comment.CreateTime = field.NewInt64(tableName, "create_time")
 	_comment.CreateDate = field.NewString(tableName, "create_date")
@@ -43,9 +43,9 @@ type comment struct {
 	commentDo commentDo
 
 	ALL         field.Asterisk
-	CommentID   field.Int32
-	VideoID     field.Int32
-	UserID      field.Int32
+	CommentID   field.Int64
+	VideoID     field.Int64
+	UserID      field.Int64
 	CommentText field.String
 	CreateTime  field.Int64
 	CreateDate  field.String
@@ -65,9 +65,9 @@ func (c comment) As(alias string) *comment {
 
 func (c *comment) updateTableName(table string) *comment {
 	c.ALL = field.NewAsterisk(table)
-	c.CommentID = field.NewInt32(table, "comment_id")
-	c.VideoID = field.NewInt32(table, "video_id")
-	c.UserID = field.NewInt32(table, "user_id")
+	c.CommentID = field.NewInt64(table, "comment_id")
+	c.VideoID = field.NewInt64(table, "video_id")
+	c.UserID = field.NewInt64(table, "user_id")
 	c.CommentText = field.NewString(table, "comment_text")
 	c.CreateTime = field.NewInt64(table, "create_time")
 	c.CreateDate = field.NewString(table, "create_date")

@@ -27,10 +27,10 @@ func newFollow(db *gorm.DB, opts ...gen.DOOption) follow {
 
 	tableName := _follow.followDo.TableName()
 	_follow.ALL = field.NewAsterisk(tableName)
-	_follow.FollowID = field.NewInt32(tableName, "follow_id")
-	_follow.FollowerID = field.NewInt32(tableName, "follower_id")
+	_follow.FollowID = field.NewInt64(tableName, "follow_id")
+	_follow.FollowbyID = field.NewInt64(tableName, "followby_id")
+	_follow.FollowerID = field.NewInt64(tableName, "follower_id")
 	_follow.CreateTime = field.NewInt64(tableName, "create_time")
-	_follow.FollowbyID = field.NewInt32(tableName, "followby_id")
 
 	_follow.fillFieldMap()
 
@@ -41,10 +41,10 @@ type follow struct {
 	followDo followDo
 
 	ALL        field.Asterisk
-	FollowID   field.Int32
-	FollowerID field.Int32
+	FollowID   field.Int64
+	FollowbyID field.Int64
+	FollowerID field.Int64
 	CreateTime field.Int64
-	FollowbyID field.Int32
 
 	fieldMap map[string]field.Expr
 }
@@ -61,10 +61,10 @@ func (f follow) As(alias string) *follow {
 
 func (f *follow) updateTableName(table string) *follow {
 	f.ALL = field.NewAsterisk(table)
-	f.FollowID = field.NewInt32(table, "follow_id")
-	f.FollowerID = field.NewInt32(table, "follower_id")
+	f.FollowID = field.NewInt64(table, "follow_id")
+	f.FollowbyID = field.NewInt64(table, "followby_id")
+	f.FollowerID = field.NewInt64(table, "follower_id")
 	f.CreateTime = field.NewInt64(table, "create_time")
-	f.FollowbyID = field.NewInt32(table, "followby_id")
 
 	f.fillFieldMap()
 
@@ -91,9 +91,9 @@ func (f *follow) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 func (f *follow) fillFieldMap() {
 	f.fieldMap = make(map[string]field.Expr, 4)
 	f.fieldMap["follow_id"] = f.FollowID
+	f.fieldMap["followby_id"] = f.FollowbyID
 	f.fieldMap["follower_id"] = f.FollowerID
 	f.fieldMap["create_time"] = f.CreateTime
-	f.fieldMap["followby_id"] = f.FollowbyID
 }
 
 func (f follow) clone(db *gorm.DB) follow {

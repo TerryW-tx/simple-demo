@@ -27,10 +27,10 @@ func newVideo(db *gorm.DB, opts ...gen.DOOption) video {
 
 	tableName := _video.videoDo.TableName()
 	_video.ALL = field.NewAsterisk(tableName)
-	_video.VideoID = field.NewInt32(tableName, "video_id")
+	_video.VideoID = field.NewInt64(tableName, "video_id")
 	_video.UserID = field.NewInt64(tableName, "user_id")
 	_video.Token = field.NewString(tableName, "token")
-	_video.CreateAt = field.NewInt64(tableName, "create_at")
+	_video.CreateTime = field.NewInt64(tableName, "create_time")
 	_video.PlayURL = field.NewString(tableName, "play_url")
 	_video.CoverURL = field.NewString(tableName, "cover_url")
 	_video.FavoriteCount = field.NewInt64(tableName, "favorite_count")
@@ -46,10 +46,10 @@ type video struct {
 	videoDo videoDo
 
 	ALL           field.Asterisk
-	VideoID       field.Int32
+	VideoID       field.Int64
 	UserID        field.Int64
 	Token         field.String
-	CreateAt      field.Int64
+	CreateTime    field.Int64
 	PlayURL       field.String
 	CoverURL      field.String
 	FavoriteCount field.Int64
@@ -71,10 +71,10 @@ func (v video) As(alias string) *video {
 
 func (v *video) updateTableName(table string) *video {
 	v.ALL = field.NewAsterisk(table)
-	v.VideoID = field.NewInt32(table, "video_id")
+	v.VideoID = field.NewInt64(table, "video_id")
 	v.UserID = field.NewInt64(table, "user_id")
 	v.Token = field.NewString(table, "token")
-	v.CreateAt = field.NewInt64(table, "create_at")
+	v.CreateTime = field.NewInt64(table, "create_time")
 	v.PlayURL = field.NewString(table, "play_url")
 	v.CoverURL = field.NewString(table, "cover_url")
 	v.FavoriteCount = field.NewInt64(table, "favorite_count")
@@ -108,7 +108,7 @@ func (v *video) fillFieldMap() {
 	v.fieldMap["video_id"] = v.VideoID
 	v.fieldMap["user_id"] = v.UserID
 	v.fieldMap["token"] = v.Token
-	v.fieldMap["create_at"] = v.CreateAt
+	v.fieldMap["create_time"] = v.CreateTime
 	v.fieldMap["play_url"] = v.PlayURL
 	v.fieldMap["cover_url"] = v.CoverURL
 	v.fieldMap["favorite_count"] = v.FavoriteCount
