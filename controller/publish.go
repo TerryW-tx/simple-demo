@@ -3,11 +3,12 @@ package controller
 import (
 	"fmt"
 	"time"
+	"strconv"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync/atomic"
 	"path/filepath"
-	"github.com/RaymondCode/simple-demo/model/dto"
+	// "github.com/RaymondCode/simple-demo/model/dto"
 	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/RaymondCode/simple-demo/dal"
 )
@@ -82,14 +83,17 @@ func Publish(c *gin.Context) {
 
 // PublishList all users have same publish video list
 func PublishList(c *gin.Context) {
-	userId := c.Query("user_id")
+	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	videoDal := dal.Video
 	videos, err := videoDal.WithContext(ctx).Where(videoDal.UserID.Eq(userId)).Find()
+	if err != nil {
+		return
+	}
 	var videosController []Video
 	for i := range videos {
 		videosController = append(
 			videosController, 
-			ConvertVideoEntityToController(videos[i]),
+			*ConvertVideoEntityToController(videos[i]),
 		)
 	}
 	c.JSON(http.StatusOK, VideoListResponse{

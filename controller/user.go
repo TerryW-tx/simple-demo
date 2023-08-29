@@ -170,19 +170,20 @@ func UserInfo(c *gin.Context) {
 	fmt.Println(err)
 
 	if err == nil {
-		_, followErr := dal.Follow.WithContext(ctx).Where(
-			dal.Follow.FollowbyID.Eq(user.UserID),
-			dal.Follow.FollowerID.Eq(userId),
-		).Take()
+		// _, followErr := dal.Follow.WithContext(ctx).Where(
+		// 	dal.Follow.FollowbyID.Eq(user.UserID),
+		// 	dal.Follow.FollowerID.Eq(userId),
+		// ).Take()
 		c.JSON(http.StatusOK, UserResponse{
 			Response: Response{StatusCode: 0},
-			User:  User{
-				Id:            user.UserID,
-				Name:          user.Username,
-				FollowCount:   user.FollowCount,
-				FollowerCount: user.FollowerCount,
-				IsFollow:      followErr == nil,
-			}, 
+			User: *ConvertUserEntityToController(user, userId),
+			// User{
+			// 	Id:            user.UserID,
+			// 	Name:          user.Username,
+			// 	FollowCount:   user.FollowCount,
+			// 	FollowerCount: user.FollowerCount,
+			// 	IsFollow:      followErr == nil,
+			// }, 
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
@@ -205,29 +206,34 @@ func UserInfo(c *gin.Context) {
 
 func ConvertUserEntityToDto(user *entity.User) *dto.User {
 	userDto := dto.User{
-		UserId: user.UserID,
+		UserID: user.UserID,
 		Username: user.Username,
 		Password: user.Password,
 		CreateTime: user.CreateTime,
 		Token: user.Token,
-		TokenUpdateTime: TokenUpdateTime,
+		TokenUpdateTime: user.TokenUpdateTime,
 		Avatar: user.Avatar,
 		BackgroundImage: user.BackgroundImage,
-		FollowCount: user.FollowCount,
-		FollowerCount: user.FollowerCount,
-		FavoriteCount: user.FavoriteCount,
-		WorkCount: user.FavoriteCount,
+		FollowCount: int(user.FollowCount),
+		FollowerCount: int(user.FollowerCount),
+		FavoriteCount: int(user.FavoriteCount),
+		WorkCount: int(user.WorkCount),
 	}
 	return &userDto
 }
 
-func ConvertUserEntityToController(user *entity.User) *User {
+func ConvertUserEntityToController(user *entity.User, followerId int64) *User {	
+	followDal := dal.Follow
+	_, followErr := followDal.WithContext(ctx).Where(
+		followDal.FollowbyID.Eq(user.UserID),
+		followDal.FollowerID.Eq(followerId),
+	).Take()
 	userController := User{
 		Id: user.UserID,
 		Name: user.Username,
 		FollowCount: user.FollowCount,
 		FollowerCount: user.FollowerCount,
-		IsFollow: false,
+		IsFollow: followErr == nil,
 	}
 	return &userController
 }
