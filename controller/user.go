@@ -3,7 +3,9 @@ package controller
 import (
 	"fmt"
 	"time"
-	"github.com/RaymondCode/simple-demo/model"
+	"context"
+	// "github.com/RaymondCode/simple-demo/model"
+	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/RaymondCode/simple-demo/dal"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -23,7 +25,8 @@ var usersLoginInfo = map[string]User{
 	},
 }
 
-var userIdSequence = int64(1)
+var userIdSequence = int32(1)
+var ctx, _ = context.WithTimeout(context.Background(), 1000*time.Second)
 
 type UserLoginResponse struct {
 	Response
@@ -36,8 +39,8 @@ type UserResponse struct {
 	User User `json:"user"`
 }
 
-func GenerateUserId() int64 {
-	atomic.AddInt64(&userIdSequence, 1)
+func GenerateUserId() int32 {
+	atomic.AddInt32(&userIdSequence, 1)
 	return userIdSequence
 }
 
@@ -52,7 +55,8 @@ func Register(c *gin.Context) {
 	// token := username + password
 	token := GenerateToken(username, password)
 	u := dal.User
-	_, err := u.Where(u.Username.Eq(username), u.Password.Eq(password)).Take()
+	_, err := u.WithContext(ctx).Where(u.Username.Eq(username), u.Password.Eq(password)).Take()
+	fmt.Println("query success")
 
 	if err == nil {
 		c.JSON(http.StatusOK, UserLoginResponse{
@@ -60,13 +64,13 @@ func Register(c *gin.Context) {
                 })
 	} else {
 		fmt.Println("new user")
-		user := model.User{
-			UserId: GenerateUserId(),
-			UserName: username,
+		user := entity.User{
+			UserID: GenerateUserId(),
+			Username: username,
 			Password: password,
-			CreateAt: time.Now().Unix(),
+			CreateTime: time.Now().Unix(),
 			Token: token,
-			TokenUpdateAt: time.Now().Unix(),
+			TokenUpdateTime: time.Now().Unix(),
 			Avatar: "teststring",
 			BackgroundImage: "testimage",
 			FollowCount: 0,
@@ -75,11 +79,11 @@ func Register(c *gin.Context) {
 			WorkCount: 0,
 		}
 		// model.CreateUserInfo(&new_user)
-		u.Create(&user)
+		u.WithContext(ctx).Create(&user)
 		c.JSON(
 			http.StatusOK, UserLoginResponse{
                         Response: Response{StatusCode: 0},
-                        UserId:   user.UserId,
+                        UserId:   int64(user.UserID),
                         Token:    user.Token,
 		})
 	}
@@ -116,20 +120,21 @@ func Login(c *gin.Context) {
 	// token := username + password
 	// token := GenerateToken(username, password)
 	userDal := dal.User
-	user, err := userDal.Where(userDal.Username.Eq(username), userDal.Password.Eq(password)).Take()
+	user, err := userDal.WithContext(ctx).Where(userDal.Username.Eq(username), userDal.Password.Eq(password)).Take()
+	fmt.Println("Login Success")
 
-	if exist == nil {
-		user.Token = GenerateToken(username, password)
-		user.TokenUpdateTime = time.Now().Unix()
+	if err == nil {
+		// user.Token = GenerateToken(username, password)
+		// user.TokenUpdateTime = time.Now().Unix()
 		fmt.Println(user.Token)
 		// model.UpdateUserInfo(&user)
-                u.Where(u.Username.Eq(username), u.Password.Eq(password)).UpdateSimple(
-			userDal.Token.Value(user.Token), 
-			userDal.TokenUpdateTime(user.TokenUpdateTime),
-		)
+                // userDal.WithContext(ctx).Where(userDal.Username.Eq(username), userDal.Password.Eq(password)).UpdateSimple(
+		// 	userDal.Token.Value(user.Token), 
+		// 	userDal.TokenUpdateTime.Value(user.TokenUpdateTime),
+		// )
 		c.JSON(http.StatusOK, UserLoginResponse{
                         Response: Response{StatusCode: 0},
-                        UserId:   user.UserId,
+                        UserId:   int64(user.UserID),
                         Token:    user.Token,
                 })
         } else {
@@ -156,14 +161,17 @@ func Login(c *gin.Context) {
 func UserInfo(c *gin.Context) {
 	token := c.Query("token")
 
-	u := dal.User
-	user, err := u.Where(u.Token.Eq(token)).Take()
+	userDal := dal.User
+	user, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
+	fmt.Println("Get Userinfo Success")
+	fmt.Println(user)
+	fmt.Println(err)
 
 	if err == nil {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: Response{StatusCode: 0},
 			User:  User{
-					Id:            user.UserId,
+					Id:            user.UserID,
 					Name:          user.Username,
 					FollowCount:   user.FollowCount,
 					FollowerCount: user.FollowerCount,
