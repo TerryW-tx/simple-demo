@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 	"context"
-	// "github.com/RaymondCode/simple-demo/model"
+	"github.com/RaymondCode/simple-demo/model/dto"
 	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/RaymondCode/simple-demo/dal"
 	"github.com/gin-gonic/gin"
@@ -25,8 +25,8 @@ var usersLoginInfo = map[string]User{
 	},
 }
 
-var userIdSequence = int32(1)
-var ctx, _ = context.WithTimeout(context.Background(), 1000*time.Second)
+var userIdSequence = int64(1)
+var ctx, _ = context.TODO()
 
 type UserLoginResponse struct {
 	Response
@@ -39,8 +39,8 @@ type UserResponse struct {
 	User User `json:"user"`
 }
 
-func GenerateUserId() int32 {
-	atomic.AddInt32(&userIdSequence, 1)
+func GenerateUserId() int64 {
+	atomic.AddInt64(&userIdSequence, 1)
 	return userIdSequence
 }
 
@@ -54,8 +54,8 @@ func Register(c *gin.Context) {
 
 	// token := username + password
 	token := GenerateToken(username, password)
-	u := dal.User
-	_, err := u.WithContext(ctx).Where(u.Username.Eq(username), u.Password.Eq(password)).Take()
+	userDal := dal.User
+	_, err := userDal.WithContext(ctx).Where(userDal.Username.Eq(username), userDal.Password.Eq(password)).Take()
 	fmt.Println("query success")
 
 	if err == nil {
@@ -79,11 +79,11 @@ func Register(c *gin.Context) {
 			WorkCount: 0,
 		}
 		// model.CreateUserInfo(&new_user)
-		u.WithContext(ctx).Create(&user)
+		userDal.WithContext(ctx).Create(&user)
 		c.JSON(
 			http.StatusOK, UserLoginResponse{
                         Response: Response{StatusCode: 0},
-                        UserId:   int64(user.UserID),
+                        UserId:   user.UserID,
                         Token:    user.Token,
 		})
 	}
@@ -124,17 +124,17 @@ func Login(c *gin.Context) {
 	fmt.Println("Login Success")
 
 	if err == nil {
-		// user.Token = GenerateToken(username, password)
-		// user.TokenUpdateTime = time.Now().Unix()
+		user.Token = GenerateToken(username, password)
+		user.TokenUpdateTime = time.Now().Unix()
 		fmt.Println(user.Token)
 		// model.UpdateUserInfo(&user)
-                // userDal.WithContext(ctx).Where(userDal.Username.Eq(username), userDal.Password.Eq(password)).UpdateSimple(
-		// 	userDal.Token.Value(user.Token), 
-		// 	userDal.TokenUpdateTime.Value(user.TokenUpdateTime),
-		// )
+                userDal.WithContext(ctx).Where(userDal.Username.Eq(username), userDal.Password.Eq(password)).UpdateSimple(
+		 	userDal.Token.Value(user.Token), 
+		 	userDal.TokenUpdateTime.Value(user.TokenUpdateTime),
+		)
 		c.JSON(http.StatusOK, UserLoginResponse{
                         Response: Response{StatusCode: 0},
-                        UserId:   int64(user.UserID),
+                        UserId:   user.UserID,
                         Token:    user.Token,
                 })
         } else {
@@ -168,14 +168,18 @@ func UserInfo(c *gin.Context) {
 	fmt.Println(err)
 
 	if err == nil {
+		_, followErr = dal.Follow.WithContext(ctx).Where(
+			dal.Follow.FollowByID.Eq(user.UserID),
+			dal.Follow.FollowerID.Eq(c.Query("user_id")),
+		).Take()
 		c.JSON(http.StatusOK, UserResponse{
 			Response: Response{StatusCode: 0},
 			User:  User{
-					Id:            user.UserID,
-					Name:          user.Username,
-					FollowCount:   user.FollowCount,
-					FollowerCount: user.FollowerCount,
-					IsFollow:      true,
+				Id:            user.UserID,
+				Name:          user.Username,
+				FollowCount:   user.FollowCount,
+				FollowerCount: user.FollowerCount,
+				IsFollow:      followErr == nil,
 			}, 
 		})
 	} else {
@@ -195,4 +199,33 @@ func UserInfo(c *gin.Context) {
 		})
 	}
 	*/
+}
+
+func ConvertUserEntityToDto(user *entity.User) *dto.User {
+	userDto := dto.User{
+		UserId: user.UserID,
+		Username: user.Username,
+		Password: user.Password,
+		CreateTime: user.CreateTime,
+		Token: user.Token,
+		TokenUpdateTime: TokenUpdateTime，
+		Avatar: user.Avatar,
+		BackgroundImage: user.BackgroundImage,
+		FollowCount: user.FollowCount,
+		FollowerCount: user.FollowerCount,
+		FavoriteCount: user.FavoriteCount,
+		WorkCount: user.FavoriteCount,
+	}
+	return &userDto
+}
+
+func ConvertUserEntityToController(user *entity.User) *User {
+	userController := User{
+		Id: user.UserID,
+		Name: user.Username,
+		FollowCount: user.FollowCount,
+		FollowerCount: user.FollowerCount,
+		IsFollow: false,
+	}
+	return &userController
 }

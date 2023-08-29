@@ -2,7 +2,9 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/RaymondCode/simple-demo/model"
+	"github.com/RaymondCode/simple-demo/model/dto"
+	"github.com/RaymondCode/simple-demo/model/entity"
+	"github.com/RaymondCode/simple-demo/dal"
 	"net/http"
 	"time"
 	"fmt"
@@ -19,40 +21,39 @@ type FeedResponse struct {
 
 // Feed same demo video list for every request
 func Feed(c *gin.Context) {
-	query_time_stamp, _ := strconv.ParseInt(c.Query("latest_time"), 10, 64)
+	latestTime, _ := strconv.ParseInt(c.Query("latest_time"), 10, 64)
 	fmt.Println(c.Query("latest_time"))
-	
-	video_infos, _ := model.QueryLastNVideoInfo(query_time_stamp, 3)
-	if video_infos != nil {
-		videos := VideoInfosToVideos(video_infos)
+
+	videoDal := dal.Video
+	videos, _ := videoDal.WithContext(ctx).Limit(3).Where(videoDal.CreateTime.Lte(latestTime)).Order(videoDal.CreateTime.Desc()).Find()
+	// video_infos, _ := model.QueryLastNVideoInfo(query_time_stamp, 3)
+	if videos != nil {
+		var videosController []Video
+		for i := range videos {
+			videosController = append(
+				videosController, 
+				ConvertVideoEntityToController(videos[i]),
+			)
+		}
+		// videos := VideoInfosToVideos(video_infos)
 		c.JSON(http.StatusOK, FeedResponse{
 			Response:  Response{StatusCode: 0},
-			VideoList: videos,
-			NextTime:  time.Now().UnixNano(),
+			VideoList: videosController,
+			NextTime:  videos[len(videos)-1].CreateTime,
 		})
 	}
 }
 
-func VideoInfosToVideos(vis []model.VideoInfo) (vs []Video) {
-	var video_lists []Video
-	for i := range vis {
-		video_lists = append(video_lists, Video{
-			Id: vis[i].VideoId,
-			Author: User{
-				Id: 0,
-				Name: "test_user",
-				FollowCount: 0,
-				FollowerCount: 0,
-				IsFollow: false,
-			},
-			PlayUrl: vis[i].PlayUrl,
-			CoverUrl: vis[i].CoverUrl,
-			FavoriteCount: int64(vis[i].FavoriteCount),
-			CommentCount: int64(vis[i].CommentCount),
-			IsFavorite: false,
-		})
+func ConvertVideoEntityToController(video *entity.Video) *Video {
+	userDal := dal.User
+	user, _ := userDal.WithContext(ctx).Where(userDal.UserID.Eq(video.UserID)).Take()
+	videoController := controller.video{
+		Id: video.VideoId,
+		Author: user,
+		PlayUrl: video.PlayURL,
+		CoverUrl: video.CoverURL,
+		FavoriteCount: video.FavoriteCount,
+		CommentCount: video.CommentCount,
+		IsFavorite: false,
 	}
-	return video_lists
-	// fmt.Println(vis)
-	// return vis
 }
