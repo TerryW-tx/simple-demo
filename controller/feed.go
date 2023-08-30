@@ -6,7 +6,7 @@ import (
 	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/RaymondCode/simple-demo/dal"
 	"net/http"
-	// "time"
+	"time"
 	"fmt"
 	"strconv"
 )
@@ -22,13 +22,18 @@ type FeedResponse struct {
 // Feed same demo video list for every request
 func Feed(c *gin.Context) {
 	latestTime, _ := strconv.ParseInt(c.Query("latest_time"), 10, 64)
-	fmt.Println(c.Query("latest_time"))
+	fmt.Println("latest time is: " + c.Query("latest_time"))
 
 	videoDal := dal.Video
-	videos, _ := videoDal.WithContext(ctx).Limit(3).Where(videoDal.CreateTime.Lte(latestTime)).Order(videoDal.CreateTime.Desc()).Find()
+	videos, err := videoDal.WithContext(ctx).Limit(3).Where(videoDal.CreateTime.Lte(latestTime)).Order(videoDal.CreateTime.Desc()).Find()
+	fmt.Println("Query videos success")
+	fmt.Println(len(videos))
+	if err != nil {
+		return
+	}
 	// video_infos, _ := model.QueryLastNVideoInfo(query_time_stamp, 3)
-	if videos != nil {
-		var videosController []Video
+	var videosController []Video
+	if len(videos) != 0 {
 		for i := range videos {
 			videosController = append(
 				videosController, 
@@ -40,6 +45,12 @@ func Feed(c *gin.Context) {
 			Response:  Response{StatusCode: 0},
 			VideoList: videosController,
 			NextTime:  videos[len(videos)-1].CreateTime,
+		})
+	} else {
+		c.JSON(http.StatusOK, FeedResponse{
+			Response:  Response{StatusCode: 0},
+			VideoList: videosController,
+			NextTime:  time.Now().Unix(),
 		})
 	}
 }

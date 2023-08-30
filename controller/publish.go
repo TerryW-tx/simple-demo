@@ -29,6 +29,9 @@ func GenerateVideoId() int64 {
 // Publish check token then save upload file to public directory
 func Publish(c *gin.Context) {
 	token := c.PostForm("token")
+    	// for key, value := range c.Request.PostForm {
+	// 	fmt.Printf("Key: %s, Value: %s\n", key, value)
+    	// }
 
 	userDal := dal.User
 	user, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
@@ -52,7 +55,7 @@ func Publish(c *gin.Context) {
 	
 	fmt.Println("new video")
 	video := entity.Video{
-  		VideoID: videoIdSequence,
+  		VideoID: GenerateVideoId(),
 		UserID: user.UserID,
         	Token: token,
         	CreateTime: time.Now().Unix(),
@@ -60,7 +63,7 @@ func Publish(c *gin.Context) {
         	CoverURL: static + "bear.jpg",
         	FavoriteCount: 0,
         	CommentCount: 0,
-        	Title: filename,
+        	Title: c.PostForm("title"),
 	}
 	// model.CreateVideoInfo(&new_video)
 	videoDal := dal.Video
