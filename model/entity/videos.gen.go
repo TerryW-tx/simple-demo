@@ -8,7 +8,7 @@ const TableNameVideo = "videos"
 
 // Video mapped from table <videos>
 type Video struct {
-	VideoID       int64  `gorm:"column:video_id;primaryKey" json:"video_id"`
+	VideoID       int64  `gorm:"column:video_id;primaryKey;autoIncrement:true" json:"video_id"`
 	UserID        int64  `gorm:"column:user_id;primaryKey" json:"user_id"`
 	Token         string `gorm:"column:token" json:"token"`
 	CreateTime    int64  `gorm:"column:create_time" json:"create_time"`

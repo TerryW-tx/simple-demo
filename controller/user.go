@@ -66,7 +66,7 @@ func Register(c *gin.Context) {
 	} else {
 		fmt.Println("new user")
 		user := entity.User{
-			UserID: GenerateUserId(),
+			// UserID: GenerateUserId(),
 			Username: username,
 			Password: password,
 			CreateTime: time.Now().Unix(),

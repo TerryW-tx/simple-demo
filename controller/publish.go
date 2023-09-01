@@ -55,7 +55,7 @@ func Publish(c *gin.Context) {
 	
 	fmt.Println("new video")
 	video := entity.Video{
-  		VideoID: GenerateVideoId(),
+  		// VideoID: GenerateVideoId(),
 		UserID: user.UserID,
         	Token: token,
         	CreateTime: time.Now().Unix(),
@@ -90,6 +90,7 @@ func PublishList(c *gin.Context) {
 	videoDal := dal.Video
 	videos, err := videoDal.WithContext(ctx).Where(videoDal.UserID.Eq(userId)).Find()
 	if err != nil {
+		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User hasn't published videos"})
 		return
 	}
 	var videosController []Video

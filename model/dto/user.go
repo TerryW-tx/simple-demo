@@ -1,7 +1,7 @@
 package dto
 
 type User struct {
-	UserID 		int64 	`gorm:"primaryKey"`
+	UserID 		int64 	`gorm:"primaryKey;autoIncrement"`
 	Username 	string
 	Password 	string
 	CreateTime	int64

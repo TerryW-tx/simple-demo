@@ -26,16 +26,32 @@ func main() {
   	g.UseDB(gormdb) // reuse your gorm db
 	
 	// create tables
-	gormdb.AutoMigrate(dto.User{}, dto.Video{}, dto.Comment{}, dto.Message{}, dto.Follow{})
+	gormdb.AutoMigrate(
+		dto.User{}, 
+		dto.Video{}, 
+		dto.Comment{}, 
+		dto.Message{}, 
+		dto.Follow{},
+		dto.Favorite{},
+	)
 
   	// Generate basic type-safe DAO API for struct `model.User` following conventions
-  	// g.ApplyBasic(dto.User{}, dto.Video{}, dto.Comment{}, dto.Message{}, dto.Follow{})
+  	// g.ApplyBasic(
+	// 	dto.User{}, 
+	// 	dto.Video{}, 
+	// 	dto.Comment{}, 
+	// 	dto.Message{}, 
+	// 	dto.Follow{},
+	// 	dto.Favorite{},
+	// )
+
   	g.ApplyBasic(
 	 	g.GenerateModel("users"),
 	 	g.GenerateModel("videos"),
 	 	g.GenerateModel("comments"),
 	  	g.GenerateModel("messages"),
 	  	g.GenerateModel("follows"),	
+	  	g.GenerateModel("favorites"),	
 	)
 
   	// Generate Type Safe API with Dynamic SQL defined on Querier interface for `model.User` and `model.Company`
