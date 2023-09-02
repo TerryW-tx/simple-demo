@@ -151,7 +151,7 @@ func CommentList(c *gin.Context) {
 	}
 
 	videoDal := dal.Video
-	video, err := videoDal.WithContext(ctx).Where(videoDal.VideoID.Eq(videoId)).Take()
+	_, err = videoDal.WithContext(ctx).Where(videoDal.VideoID.Eq(videoId)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User hasn't published videos"})
 		return
