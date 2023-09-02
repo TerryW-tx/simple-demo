@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	// "github.com/RaymondCode/simple-demo/model/dto"
-	"github.com/RaymondCode/simple-demo/model/entity"
+	// "github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/RaymondCode/simple-demo/dal"
 	"net/http"
 	"time"
@@ -53,20 +53,4 @@ func Feed(c *gin.Context) {
 			NextTime:  time.Now().Unix(),
 		})
 	}
-}
-
-func ConvertVideoEntityToController(video *entity.Video) *Video {
-	userDal := dal.User
-	user, _ := userDal.WithContext(ctx).Where(userDal.UserID.Eq(video.UserID)).Take()
-	// followerId := strconv.ParseInt(video.UserID, 10, 64)
-	videoController := Video{
-		Id: video.VideoID,
-		Author: *ConvertUserEntityToController(user, video.UserID),
-		PlayUrl: video.PlayURL,
-		CoverUrl: video.CoverURL,
-		FavoriteCount: video.FavoriteCount,
-		CommentCount: video.CommentCount,
-		IsFavorite: false,
-	}
-	return &videoController
 }

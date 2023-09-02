@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 	"context"
-	"github.com/RaymondCode/simple-demo/model/dto"
+	// "github.com/RaymondCode/simple-demo/model/dto"
 	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/RaymondCode/simple-demo/dal"
 	"github.com/gin-gonic/gin"
@@ -202,38 +202,4 @@ func UserInfo(c *gin.Context) {
 		})
 	}
 	*/
-}
-
-func ConvertUserEntityToDto(user *entity.User) *dto.User {
-	userDto := dto.User{
-		UserID: user.UserID,
-		Username: user.Username,
-		Password: user.Password,
-		CreateTime: user.CreateTime,
-		Token: user.Token,
-		TokenUpdateTime: user.TokenUpdateTime,
-		Avatar: user.Avatar,
-		BackgroundImage: user.BackgroundImage,
-		FollowCount: int(user.FollowCount),
-		FollowerCount: int(user.FollowerCount),
-		FavoriteCount: int(user.FavoriteCount),
-		WorkCount: int(user.WorkCount),
-	}
-	return &userDto
-}
-
-func ConvertUserEntityToController(user *entity.User, followerId int64) *User {	
-	followDal := dal.Follow
-	_, followErr := followDal.WithContext(ctx).Where(
-		followDal.FollowbyID.Eq(user.UserID),
-		followDal.FollowerID.Eq(followerId),
-	).Take()
-	userController := User{
-		Id: user.UserID,
-		Name: user.Username,
-		FollowCount: user.FollowCount,
-		FollowerCount: user.FollowerCount,
-		IsFollow: followErr == nil,
-	}
-	return &userController
 }
