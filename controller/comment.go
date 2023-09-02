@@ -46,37 +46,28 @@ func CommentAction(c *gin.Context) {
 	} else if actionType == "2" {
 		err = CancelComment(c, user, video)
 	}
-
-	if user, exist := usersLoginInfo[token]; exist {
-		if actionType == "1" {
-			text := c.Query("comment_text")
-			c.JSON(http.StatusOK, CommentActionResponse{Response: Response{StatusCode: 0},
-				Comment: Comment{
-					Id:         1,
-					User:       user,
-					Content:    text,
-					CreateDate: "05-01",
-				}})
-			return
-		}
-		c.JSON(http.StatusOK, Response{StatusCode: 0})
-	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
-	}
 }
 
 func CreateComment(c *gin.Context, user *entity.User, video *entity.Video) error {
 	userId := user.UserID
 	videoId := video.VideoID
 	
+	comment := entity.Comment{
+		VideoID: videoId,
+		UserID: userId,
+		CommentText: c.Query("comment_text"),
+		CreateTime: time.Now().Unix(),
+		CreateDate: time.Now().Format("2006-01-02"),
+	}
+
 	err := dal.GetQueryByCtx(ctx).Transaction(func(tx *dal.Query) error {
-		comment := entity.Comment{
-			VideoID: videoId,
-			UserID: userId,
-			CommentText: c.Query("comment_text"),
-			CreateTime: time.Now().Unix(),
-			CreateDate: time.Now().Format("2006-01-02"),
-		}
+		// comment := entity.Comment{
+		// 	VideoID: videoId,
+		// 	UserID: userId,
+		// 	CommentText: c.Query("comment_text"),
+		// 	CreateTime: time.Now().Unix(),
+		// 	CreateDate: time.Now().Format("2006-01-02"),
+		// }
 		commentDal := dal.Comment
 		videoDal := dal.Video
 		err := commentDal.WithContext(ctx).Create(&comment)
@@ -91,15 +82,15 @@ func CreateComment(c *gin.Context, user *entity.User, video *entity.Video) error
 	})
 
 	if err == nil {
-		commentDal := dal.Comment
-		comment, err := commentDal.WithContext(ctx).Where(
-			commentDal.UserID.Eq(userId),
-			commentDal.VideoID.Eq(videoId),
-		).Take()
+		// commentDal := dal.Comment
+		// comment, err := commentDal.WithContext(ctx).Where(
+		// 	commentDal.UserID.Eq(userId),
+		// 	commentDal.VideoID.Eq(videoId),
+		// ).Take()
 
-		if err != nil {
-			return err
-		}
+		// if err != nil {
+		// 	return err
+		// }
 
 		// followDal := dal.Follow
 		// _, followErr := followDal.WithContext(ctx).Where(
@@ -108,7 +99,7 @@ func CreateComment(c *gin.Context, user *entity.User, video *entity.Video) error
 		// ).Take()
 		c.JSON(http.StatusOK, CommentActionResponse{
 			Response: Response{StatusCode: 0},
-			Comment: *ConvertCommentEntityToController(comment, user),
+			Comment: *ConvertCommentEntityToController(&comment, user),
 		})
 	}
 

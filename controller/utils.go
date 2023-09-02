@@ -74,3 +74,14 @@ func ConvertCommentEntityToController(comment *entity.Comment, user *entity.User
 	}
 	return &commentController
 }
+
+func ConvertMessageEntityToController(message *entity.Message) *Message {
+	messageController := Message{
+		Id: message.MessageID,
+		// : message.ToUserID,
+		// : message.UserID,
+		Content: message.MessageText,
+		CreateTime: message.CreateDate,
+	}
+	return &messageController
+}
