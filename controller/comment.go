@@ -140,8 +140,37 @@ func CancelComment(c *gin.Context, user *entity.User, video *entity.Video) error
 
 // CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
+	token := c.Query("token")
+	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
+
+	userDal := dal.User
+	user, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
+	if err != nil {
+		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		return
+	}
+
+	videoDal := dal.Video
+	video, err := videoDal.WithContext(ctx).Where(videoDal.VideoID.Eq(videoId)).Take()
+	if err != nil {
+		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User hasn't published videos"})
+		return
+	}
+
+	commentDal := dal.Comment
+	comments, err := commentDal.WithContext(ctx).Where(commentDal.VideoID.Eq(videoId)).Find()
+
+	var commentsController []Comment
+	if len(comments) != 0 {
+		for i := range comments {
+			commentsController = append(
+				commentsController,
+				*ConvertCommentEntityToController(comments[i], user),
+			)
+		}
+	}
 	c.JSON(http.StatusOK, CommentListResponse{
 		Response:    Response{StatusCode: 0},
-		CommentList: DemoComments,
+		CommentList: commentsController,
 	})
 }
