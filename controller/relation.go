@@ -1,7 +1,7 @@
 package controller
 
 import (
-	// "fmt"
+	"fmt"
 	"time"
 	"strconv"
 	"github.com/gin-gonic/gin"
@@ -35,15 +35,9 @@ func RelationAction(c *gin.Context) {
 	}
 
 	if actionType == "1" {
-		err = CreateFollow(c, byUser, toUser)
+		err = CreateFollow(c, toUser, byUser)
 	} else if actionType == "2" {
-		err = CancelFollow(c, byUser, toUser)
-	}
-
-	if _, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, Response{StatusCode: 0})
-	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		err = CancelFollow(c, toUser, byUser)
 	}
 }
 
@@ -60,7 +54,12 @@ func CreateFollow(c *gin.Context, toUser, byUser *entity.User) error {
 		}
 		followDal := dal.Follow
 		userDal := dal.User
-		err := followDal.WithContext(ctx).Create(&follow)
+		_, err := followDal.WithContext(ctx).Where(followDal.FollowbyID.Eq(toUserId), followDal.FollowerID.Eq(byUserId)).Take()
+		if err == nil {
+		 	return err
+		}
+
+		err = followDal.WithContext(ctx).Create(&follow)
 		if err != nil {
 			return err
 		}
@@ -142,6 +141,8 @@ func FollowList(c *gin.Context) {
 			)
 		}
 	}
+
+	fmt.Println(usersController)
 
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: Response{

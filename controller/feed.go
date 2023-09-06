@@ -21,7 +21,12 @@ type FeedResponse struct {
 
 // Feed same demo video list for every request
 func Feed(c *gin.Context) {
-	latestTime, _ := strconv.ParseInt(c.Query("latest_time"), 10, 64)
+	var latestTime int64
+	if c.Query("latest_time") == "" {
+		latestTime = time.Now().Unix()
+	} else {
+		latestTime, _ = strconv.ParseInt(c.Query("latest_time"), 10, 64)
+	}
 	fmt.Println("latest time is: " + c.Query("latest_time"))
 
 	videoDal := dal.Video
@@ -41,10 +46,12 @@ func Feed(c *gin.Context) {
 			)
 		}
 		// videos := VideoInfosToVideos(video_infos)
+		fmt.Println("video list: ", videosController)
 		c.JSON(http.StatusOK, FeedResponse{
 			Response:  Response{StatusCode: 0},
 			VideoList: videosController,
-			NextTime:  videos[len(videos)-1].CreateTime,
+			// NextTime:  videos[len(videos)-1].CreateTime,
+			NextTime:  time.Now().Unix(),
 		})
 	} else {
 		c.JSON(http.StatusOK, FeedResponse{

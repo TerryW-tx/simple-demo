@@ -78,7 +78,10 @@ func MessageChat(c *gin.Context) {
 	messageDal := dal.Message
 	messages, err := messageDal.WithContext(ctx).Where(
 		messageDal.UserID.Eq(fromUser.UserID),
+		messageDal.ToUserID.Eq(toUserId),
+	).Or(
 		messageDal.UserID.Eq(toUserId),
+		messageDal.ToUserID.Eq(fromUser.UserID),
 	).Find()
 	
 	var messagesController []Message
