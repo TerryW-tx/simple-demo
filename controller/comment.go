@@ -1,14 +1,12 @@
 package controller
 
 import (
-	// "fmt"
-	"time"
-	"strconv"
+	"github.com/RaymondCode/simple-demo/dal"
+	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	// "github.com/RaymondCode/simple-demo/model/dto"
-	"github.com/RaymondCode/simple-demo/model/entity"
-	"github.com/RaymondCode/simple-demo/dal"
+	"strconv"
+	"time"
 )
 
 type CommentListResponse struct {
@@ -21,26 +19,26 @@ type CommentActionResponse struct {
 	Comment Comment `json:"comment,omitempty"`
 }
 
-// CommentAction no practical effect, just check if token is valid
 func CommentAction(c *gin.Context) {
 	token := c.Query("token")
 	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
 	actionType := c.Query("action_type")
-	
+
 	userDal := dal.User
+	videoDal := dal.Video
+
 	user, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 		return
 	}
 
-	videoDal := dal.Video
 	video, err := videoDal.WithContext(ctx).Where(videoDal.VideoID.Eq(videoId)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User hasn't published videos"})
 		return
 	}
-	
+
 	if actionType == "1" {
 		err = CreateComment(c, user, video)
 	} else if actionType == "2" {
@@ -51,30 +49,25 @@ func CommentAction(c *gin.Context) {
 func CreateComment(c *gin.Context, user *entity.User, video *entity.Video) error {
 	userId := user.UserID
 	videoId := video.VideoID
-	
+
 	comment := entity.Comment{
-		VideoID: videoId,
-		UserID: userId,
+		VideoID:     videoId,
+		UserID:      userId,
 		CommentText: c.Query("comment_text"),
-		CreateTime: time.Now().Unix(),
-		CreateDate: time.Now().Format("2006-01-02"),
+		CreateTime:  time.Now().Unix(),
+		CreateDate:  time.Now().Format("2006-01-02"),
 	}
 
 	err := dal.GetQueryByCtx(ctx).Transaction(func(tx *dal.Query) error {
-		// comment := entity.Comment{
-		// 	VideoID: videoId,
-		// 	UserID: userId,
-		// 	CommentText: c.Query("comment_text"),
-		// 	CreateTime: time.Now().Unix(),
-		// 	CreateDate: time.Now().Format("2006-01-02"),
-		// }
 		commentDal := dal.Comment
 		videoDal := dal.Video
 		err := commentDal.WithContext(ctx).Create(&comment)
 		if err != nil {
 			return err
 		}
-		_, err = videoDal.WithContext(ctx).Where(videoDal.VideoID.Eq(videoId)).UpdateSimple(videoDal.CommentCount.Add(1))
+		_, err = videoDal.WithContext(ctx).
+			Where(videoDal.VideoID.Eq(videoId)).
+			UpdateSimple(videoDal.CommentCount.Add(1))
 		if err != nil {
 			return err
 		}
@@ -82,43 +75,33 @@ func CreateComment(c *gin.Context, user *entity.User, video *entity.Video) error
 	})
 
 	if err == nil {
-		// commentDal := dal.Comment
-		// comment, err := commentDal.WithContext(ctx).Where(
-		// 	commentDal.UserID.Eq(userId),
-		// 	commentDal.VideoID.Eq(videoId),
-		// ).Take()
-
-		// if err != nil {
-		// 	return err
-		// }
-
-		// followDal := dal.Follow
-		// _, followErr := followDal.WithContext(ctx).Where(
-		// 	followDal.FollowbyID.Eq(video.UserID),
-		// 	followDal.FollowerID.Eq(user.UserID),
-		// ).Take()
 		c.JSON(http.StatusOK, CommentActionResponse{
 			Response: Response{StatusCode: 0},
-			Comment: *ConvertCommentEntityToController(&comment, user),
+			Comment:  *ConvertCommentEntityToController(&comment, user),
 		})
 	}
 
 	return err
 }
 
-
 func CancelComment(c *gin.Context, user *entity.User, video *entity.Video) error {
 	userId := user.UserID
 	videoId := video.VideoID
-	
+
 	err := dal.GetQueryByCtx(ctx).Transaction(func(tx *dal.Query) error {
 		commentDal := dal.Comment
 		videoDal := dal.Video
-		_, err := commentDal.WithContext(ctx).Where(commentDal.VideoID.Eq(videoId), commentDal.UserID.Eq(userId)).Delete()
+		_, err := commentDal.WithContext(ctx).
+			Where(
+				commentDal.VideoID.Eq(videoId),
+				commentDal.UserID.Eq(userId),
+			).Delete()
 		if err != nil {
 			return err
 		}
-		_, err = videoDal.WithContext(ctx).Where(videoDal.VideoID.Eq(videoId)).UpdateSimple(videoDal.CommentCount.Add(-1))
+		_, err = videoDal.WithContext(ctx).
+			Where(videoDal.VideoID.Eq(videoId)).
+			UpdateSimple(videoDal.CommentCount.Add(-1))
 		if err != nil {
 			return err
 		}
@@ -129,19 +112,19 @@ func CancelComment(c *gin.Context, user *entity.User, video *entity.Video) error
 	return err
 }
 
-// CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
 	token := c.Query("token")
 	videoId, _ := strconv.ParseInt(c.Query("video_id"), 10, 64)
 
 	userDal := dal.User
+	videoDal := dal.Video
+
 	user, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 		return
 	}
 
-	videoDal := dal.Video
 	_, err = videoDal.WithContext(ctx).Where(videoDal.VideoID.Eq(videoId)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User hasn't published videos"})

@@ -2,15 +2,14 @@ package controller
 
 import (
 	"fmt"
-	"time"
-	"strconv"
+	"github.com/RaymondCode/simple-demo/config"
+	"github.com/RaymondCode/simple-demo/dal"
+	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"sync/atomic"
 	"path/filepath"
-	// "github.com/RaymondCode/simple-demo/model/dto"
-	"github.com/RaymondCode/simple-demo/model/entity"
-	"github.com/RaymondCode/simple-demo/dal"
+	"strconv"
+	"time"
 )
 
 type VideoListResponse struct {
@@ -18,22 +17,17 @@ type VideoListResponse struct {
 	VideoList []Video `json:"video_list"`
 }
 
-var static string = "http://120.55.103.230:8080/static/"
-var videoIdSequence = int64(1)
+var static string = config.StaticUrl
+var public string = config.PublicPath
 
-func GenerateVideoId() int64 {
-	atomic.AddInt64(&videoIdSequence, 1)
-	return videoIdSequence
-}
-
-// Publish check token then save upload file to public directory
+// Publish videos
+// Saved filename rule: username + create time + upload filename
 func Publish(c *gin.Context) {
 	token := c.PostForm("token")
-    	// for key, value := range c.Request.PostForm {
-	// 	fmt.Printf("Key: %s, Value: %s\n", key, value)
-    	// }
 
 	userDal := dal.User
+	videoDal := dal.Video
+	
 	user, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
@@ -51,25 +45,42 @@ func Publish(c *gin.Context) {
 
 	filename := filepath.Base(data.Filename)
 	finalName := fmt.Sprintf("%s_%d_%s", user.Username, time.Now().Unix(), filename)
-	saveFile := filepath.Join("./public/", finalName)
-	
-	fmt.Println("new video")
+	saveFile := filepath.Join(public, finalName)
+
 	video := entity.Video{
-  		// VideoID: GenerateVideoId(),
-		UserID: user.UserID,
-        	Token: token,
-        	CreateTime: time.Now().Unix(),
-        	PlayURL: static + finalName,
-        	CoverURL: static + "bear.jpg",
-        	FavoriteCount: 0,
-        	CommentCount: 0,
-        	Title: c.PostForm("title"),
+		// VideoID: NULL,
+		UserID:     user.UserID,
+		Token:      token,
+		CreateTime: time.Now().Unix(),
+		PlayURL:    static + finalName,
+		// test cover
+		CoverURL:      static + "bear.jpg",
+		FavoriteCount: 0,
+		CommentCount:  0,
+		Title:         c.PostForm("title"),
 	}
-	// model.CreateVideoInfo(&new_video)
-	videoDal := dal.Video
-	videoDal.WithContext(ctx).Create(&video)
-	userDal.WithContext(ctx).Where(userDal.UserID.Eq(user.UserID)).UpdateSimple(userDal.WorkCount.Add(1))
-	// saveFile := filepath.Join("./public/", 'test.mp4')
+
+	err = dal.GetQueryByCtx(ctx).Transaction(func(tx *dal.Query) error {
+		err := videoDal.WithContext(ctx).Create(&video)
+		if err != nil {
+			return err
+		}
+		_, err = userDal.WithContext(ctx).
+			Where(userDal.UserID.Eq(user.UserID)).
+			UpdateSimple(userDal.WorkCount.Add(1))
+		if err != nil {
+			return err
+		}
+		return err
+	})
+	if err != nil {
+		c.JSON(http.StatusOK, Response{
+			StatusCode: 1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+
 	if err := c.SaveUploadedFile(data, saveFile); err != nil {
 		c.JSON(http.StatusOK, Response{
 			StatusCode: 1,
@@ -84,7 +95,6 @@ func Publish(c *gin.Context) {
 	})
 }
 
-// PublishList all users have same publish video list
 func PublishList(c *gin.Context) {
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	videoDal := dal.Video
@@ -93,10 +103,11 @@ func PublishList(c *gin.Context) {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User hasn't published videos"})
 		return
 	}
+
 	var videosController []Video
 	for i := range videos {
 		videosController = append(
-			videosController, 
+			videosController,
 			*ConvertVideoEntityToController(videos[i]),
 		)
 	}

@@ -1,14 +1,12 @@
 package controller
 
 import (
-	"fmt"
-	"time"
-	"strconv"
+	"github.com/RaymondCode/simple-demo/dal"
+	"github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	// "github.com/RaymondCode/simple-demo/model/dto"
-	"github.com/RaymondCode/simple-demo/model/entity"
-	"github.com/RaymondCode/simple-demo/dal"
+	"strconv"
+	"time"
 )
 
 type UserListResponse struct {
@@ -23,6 +21,7 @@ func RelationAction(c *gin.Context) {
 	actionType := c.Query("action_type")
 
 	userDal := dal.User
+
 	byUser, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
@@ -41,11 +40,10 @@ func RelationAction(c *gin.Context) {
 	}
 }
 
-
 func CreateFollow(c *gin.Context, toUser, byUser *entity.User) error {
 	toUserId := toUser.UserID
 	byUserId := byUser.UserID
-	
+
 	err := dal.GetQueryByCtx(ctx).Transaction(func(tx *dal.Query) error {
 		follow := entity.Follow{
 			FollowbyID: toUserId,
@@ -56,7 +54,7 @@ func CreateFollow(c *gin.Context, toUser, byUser *entity.User) error {
 		userDal := dal.User
 		_, err := followDal.WithContext(ctx).Where(followDal.FollowbyID.Eq(toUserId), followDal.FollowerID.Eq(byUserId)).Take()
 		if err == nil {
-		 	return err
+			return err
 		}
 
 		err = followDal.WithContext(ctx).Create(&follow)
@@ -86,7 +84,7 @@ func CreateFollow(c *gin.Context, toUser, byUser *entity.User) error {
 func CancelFollow(c *gin.Context, toUser, byUser *entity.User) error {
 	toUserId := toUser.UserID
 	byUserId := byUser.UserID
-	
+
 	err := dal.GetQueryByCtx(ctx).Transaction(func(tx *dal.Query) error {
 		followDal := dal.Follow
 		userDal := dal.User
@@ -114,8 +112,10 @@ func CancelFollow(c *gin.Context, toUser, byUser *entity.User) error {
 func FollowList(c *gin.Context) {
 	token := c.Query("token")
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
-	
+
 	userDal := dal.User
+	followDal := dal.Follow
+
 	viewUser, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
@@ -128,21 +128,20 @@ func FollowList(c *gin.Context) {
 		return
 	}
 
-	followDal := dal.Follow
 	follows, err := followDal.WithContext(ctx).Where(followDal.FollowerID.Eq(userId)).Find()
 
 	var usersController []User
 	if len(follows) != 0 {
 		for i := range follows {
-			followbyUser, _ := userDal.WithContext(ctx).Where(userDal.UserID.Eq(follows[i].FollowbyID)).Take()
+			followbyUser, _ := userDal.WithContext(ctx).
+				Where(userDal.UserID.Eq(follows[i].FollowbyID)).
+				Take()
 			usersController = append(
 				usersController,
 				*ConvertUserEntityToController(followbyUser, viewUser.UserID),
 			)
 		}
 	}
-
-	fmt.Println(usersController)
 
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: Response{
@@ -152,12 +151,13 @@ func FollowList(c *gin.Context) {
 	})
 }
 
-// FollowerList all users have same follower list
 func FollowerList(c *gin.Context) {
 	token := c.Query("token")
 	userId, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
-	
+
 	userDal := dal.User
+	followDal := dal.Follow
+
 	viewUser, err := userDal.WithContext(ctx).Where(userDal.Token.Eq(token)).Take()
 	if err != nil {
 		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
@@ -170,13 +170,14 @@ func FollowerList(c *gin.Context) {
 		return
 	}
 
-	followDal := dal.Follow
 	follows, err := followDal.WithContext(ctx).Where(followDal.FollowbyID.Eq(userId)).Find()
 
 	var usersController []User
 	if len(follows) != 0 {
 		for i := range follows {
-			followerUser, _ := userDal.WithContext(ctx).Where(userDal.UserID.Eq(follows[i].FollowerID)).Take()
+			followerUser, _ := userDal.WithContext(ctx).
+				Where(userDal.UserID.Eq(follows[i].FollowerID)).
+				Take()
 			usersController = append(
 				usersController,
 				*ConvertUserEntityToController(followerUser, viewUser.UserID),

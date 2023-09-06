@@ -1,17 +1,12 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
-	// "github.com/RaymondCode/simple-demo/model/dto"
-	// "github.com/RaymondCode/simple-demo/model/entity"
 	"github.com/RaymondCode/simple-demo/dal"
+	"github.com/gin-gonic/gin"
 	"net/http"
-	"time"
-	"fmt"
 	"strconv"
+	"time"
 )
-
-// test
 
 type FeedResponse struct {
 	Response
@@ -20,6 +15,10 @@ type FeedResponse struct {
 }
 
 // Feed same demo video list for every request
+// Feed video list
+// Feed rule:
+// 1. CreateTime < latest_time
+// 2. if no more older videos exist, feed last several videos desc by CreateTime
 func Feed(c *gin.Context) {
 	var latestTime int64
 	if c.Query("latest_time") == "" {
@@ -27,35 +26,40 @@ func Feed(c *gin.Context) {
 	} else {
 		latestTime, _ = strconv.ParseInt(c.Query("latest_time"), 10, 64)
 	}
-	fmt.Println("latest time is: " + c.Query("latest_time"))
 
+	feedNum := 3
 	videoDal := dal.Video
-	videos, err := videoDal.WithContext(ctx).Limit(3).Where(videoDal.CreateTime.Lte(latestTime)).Order(videoDal.CreateTime.Desc()).Find()
-	fmt.Println("Query videos success")
-	fmt.Println(len(videos))
+	videos, err := videoDal.WithContext(ctx).
+		Limit(feedNum).
+		Where(videoDal.CreateTime.Lte(latestTime)).
+		Order(videoDal.CreateTime.Desc()).
+		Find()
+	if len(videos) == 0 {
+		videos, err = videoDal.WithContext(ctx).
+			Limit(feedNum).
+			Order(videoDal.CreateTime.Desc()).
+			Find()
+	}
 	if err != nil {
 		return
 	}
-	// video_infos, _ := model.QueryLastNVideoInfo(query_time_stamp, 3)
+
 	var videosController []Video
 	if len(videos) != 0 {
 		for i := range videos {
 			videosController = append(
-				videosController, 
+				videosController,
 				*ConvertVideoEntityToController(videos[i]),
 			)
 		}
-		// videos := VideoInfosToVideos(video_infos)
-		fmt.Println("video list: ", videosController)
 		c.JSON(http.StatusOK, FeedResponse{
 			Response:  Response{StatusCode: 0},
 			VideoList: videosController,
-			// NextTime:  videos[len(videos)-1].CreateTime,
-			NextTime:  time.Now().Unix(),
+			NextTime:  videos[len(videos)-1].CreateTime,
 		})
 	} else {
 		c.JSON(http.StatusOK, FeedResponse{
-			Response:  Response{StatusCode: 0},
+			Response:  Response{StatusCode: 1},
 			VideoList: videosController,
 			NextTime:  time.Now().Unix(),
 		})

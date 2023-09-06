@@ -1,19 +1,18 @@
 package main
 
 import (
-	"os"
-	"io"
+	"github.com/RaymondCode/simple-demo/config"
+	"github.com/RaymondCode/simple-demo/dal"
 	"github.com/RaymondCode/simple-demo/service"
 	"github.com/gin-gonic/gin"
-	"github.com/RaymondCode/simple-demo/dal"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-        "gorm.io/driver/mysql"
+	"io"
+	"os"
 )
 
 func main() {
-	// model.InitDatabase()
-	gormdb, _ := gorm.Open(mysql.Open("test:123456@(120.55.103.230:3306)/douyin"))
-        // g.UseDB(gormdb) // reuse your gorm db
+	gormdb, _ := gorm.Open(mysql.Open(config.MysqlDns))
 	dal.SetDefault(gormdb)
 
 	go service.RunMessageServer()
